@@ -1,0 +1,87 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "market-analyst/fetch/financial-datasets/v1.0",
+  "title": "Financial Datasets Fetch Result",
+  "description": "Data from Financial Datasets MCP: fundamentals, SEC filings, insider transactions, institutional holdings.",
+  "type": "object",
+  "required": ["schema_version", "source", "status", "fetched_at", "data"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": { "type": "string", "const": "1.0" },
+    "source": { "type": "string", "const": "financial_datasets" },
+    "status": { "type": "string", "enum": ["ok", "error", "partial"] },
+    "error_message": { "type": ["string", "null"], "default": null },
+    "fetched_at": { "type": "string", "format": "date-time" },
+    "data": {
+      "type": ["object", "null"],
+      "description": "Null when status is 'error'.",
+      "properties": {
+        "fundamentals": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["ticker", "market_cap", "pe_ratio", "eps", "revenue", "period"],
+            "properties": {
+              "ticker": { "type": "string" },
+              "market_cap": { "type": "string", "description": "Decimal-safe string." },
+              "pe_ratio": { "type": ["string", "null"] },
+              "eps": { "type": ["string", "null"] },
+              "revenue": { "type": ["string", "null"] },
+              "net_income": { "type": ["string", "null"] },
+              "dividend_yield": { "type": ["string", "null"] },
+              "period": { "type": "string", "enum": ["Q1", "Q2", "Q3", "Q4", "FY", "TTM"] },
+              "period_end_date": { "type": "string", "format": "date" }
+            }
+          }
+        },
+        "sec_filings": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["ticker", "filing_type", "filed_date", "title"],
+            "properties": {
+              "ticker": { "type": "string" },
+              "filing_type": { "type": "string", "description": "e.g., 10-K, 10-Q, 8-K, 13F" },
+              "filed_date": { "type": "string", "format": "date" },
+              "title": { "type": "string" },
+              "url": { "type": ["string", "null"] },
+              "summary": { "type": ["string", "null"] }
+            }
+          }
+        },
+        "insider_transactions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["ticker", "insider_name", "title", "transaction_type", "shares", "price_per_share", "transaction_date"],
+            "properties": {
+              "ticker": { "type": "string" },
+              "insider_name": { "type": "string" },
+              "title": { "type": "string", "description": "Insider's role, e.g., CEO, CFO, Director" },
+              "transaction_type": { "type": "string", "enum": ["buy", "sell", "exercise", "gift"] },
+              "shares": { "type": "string" },
+              "price_per_share": { "type": ["string", "null"] },
+              "transaction_date": { "type": "string", "format": "date" }
+            }
+          }
+        },
+        "institutional_holdings": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["ticker", "institution_name", "shares", "value", "report_date"],
+            "properties": {
+              "ticker": { "type": "string" },
+              "institution_name": { "type": "string" },
+              "shares": { "type": "string" },
+              "value": { "type": "string", "description": "Total holding value. Decimal-safe string." },
+              "change_shares": { "type": ["string", "null"], "description": "Change from previous report. Positive=added, negative=reduced." },
+              "change_pct": { "type": ["string", "null"] },
+              "report_date": { "type": "string", "format": "date" }
+            }
+          }
+        }
+      }
+    }
+  }
+}

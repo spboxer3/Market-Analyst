@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "market-analyst/conventions/v1.0",
+  "title": "Market Analyst JSON Conventions",
+  "description": "All JSON files in the market-analyst pipeline MUST follow these conventions to prevent data parsing errors during analysis.",
+  "conventions": {
+    "encoding": {
+      "charset": "UTF-8",
+      "bom": true,
+      "description": "All files use UTF-8 encoding. BOM is included for Windows compatibility."
+    },
+    "datetime": {
+      "format": "ISO 8601 with timezone offset",
+      "example": "2026-03-17T08:00:00-04:00",
+      "rules": [
+        "Always include timezone offset, never use 'Z' shorthand — use '+00:00' instead",
+        "Never use Unix timestamps",
+        "Date-only fields use 'YYYY-MM-DD' format"
+      ]
+    },
+    "decimal_safe_strings": {
+      "description": "Fields representing monetary values, prices, percentages, or any value where floating-point precision matters MUST use string type with exact decimal representation.",
+      "example_correct": "\"154.32\"",
+      "example_wrong": 154.32,
+      "affected_fields": [
+        "price", "close", "open", "high", "low", "volume_dollar",
+        "cost_basis", "market_value", "pnl", "pnl_pct",
+        "rsi", "macd", "sma", "ema"
+      ]
+    },
+    "null_handling": {
+      "rules": [
+        "Use explicit null for missing or unavailable data",
+        "Never use empty string '' as a substitute for null",
+        "Never use 0 or -1 as sentinel values for missing data",
+        "Never omit keys — include the key with null value"
+      ]
+    },
+    "arrays": {
+      "rules": [
+        "Always use arrays even for single items — no scalar/array ambiguity",
+        "Empty collections are represented as [] not null",
+        "Array items must all share the same schema — no mixed types"
+      ]
+    },
+    "enums": {
+      "rules": [
+        "Enum values are lowercase_snake_case strings",
+        "Invalid enum values must be rejected at parse time",
+        "New enum values require schema_version bump"
+      ]
+    },
+    "versioning": {
+      "rules": [
+        "Every root JSON object includes 'schema_version': '1.0'",
+        "Backward-incompatible changes require major version bump",
+        "Parsers must check schema_version before processing"
+      ]
+    },
+    "status_codes": {
+      "enum": ["ok", "error", "partial"],
+      "rules": [
+        "Every fetch or process result includes a 'status' field",
+        "'ok' — all data retrieved/processed successfully",
+        "'partial' — some data available but incomplete",
+        "'error' — failed entirely, check 'error_message' field"
+      ]
+    },
+    "identifiers": {
+      "rules": [
+        "Ticker symbols are UPPERCASE (e.g., 'TSMC', 'AAPL')",
+        "Source IDs are lowercase_snake_case (e.g., 'yfinance', 'alpha_vantage')",
+        "Report IDs use format: '{report_type}_{YYYYMMDD}_{HHmmss}'"
+      ]
+    }
+  }
+}

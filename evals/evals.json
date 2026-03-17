@@ -1,0 +1,23 @@
+{
+  "skill_name": "market-analyst",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "幫我生成今天的盤後日報，重點看半導體跟 TSMC 表現",
+      "expected_output": "生成 post_market 類型的 trigger_request.json，focus_tickers 包含 TSMC，portfolio gate 判斷為 without_portfolio（無 portfolio 輸入），report_structure 包含 8 個 section 中適用的 7 個（排除需要 portfolio 的 P&L）",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "我有一個投資組合（2330.TW 1000股 成本580, AAPL 50股 成本178.50），請生成本週的週報",
+      "expected_output": "生成 weekly 類型報告，portfolio gate 為 with_portfolio，holdings 正確解析為 decimal-safe strings，report_structure 包含 Portfolio P&L section，排除 tomorrow_preview",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "明天開盤前給我一份盤前日報就好，不用太詳細",
+      "expected_output": "生成 pre_market 類型報告，input_mode 為 minimal，portfolio gate 為 without_portfolio，report_structure 只包含 5 個 section（market_overview, breaking_news, technical_signals, polymarket, tomorrow_preview）",
+      "files": []
+    }
+  ]
+}

@@ -1,0 +1,92 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "market-analyst/output/v1.0",
+  "title": "Output Manifest",
+  "description": "Stage 6: Localized output tracking. Maps each generated PDF to its locale and file path.",
+  "type": "object",
+  "required": ["schema_version", "report_id", "generated_at", "outputs"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": { "type": "string", "const": "1.0" },
+    "report_id": { "type": "string" },
+    "generated_at": { "type": "string", "format": "date-time" },
+    "outputs": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 2,
+      "items": {
+        "type": "object",
+        "required": ["locale", "priority", "audience", "audience_share", "file_path", "file_format", "file_size_bytes", "page_count", "status"],
+        "properties": {
+          "locale": {
+            "type": "string",
+            "enum": ["zh-TW", "zh-CN"]
+          },
+          "priority": {
+            "type": "string",
+            "enum": ["primary", "secondary"]
+          },
+          "audience": {
+            "type": "string",
+            "description": "Target audience region description.",
+            "examples": ["Taiwan + HK", "Mainland + NA"]
+          },
+          "audience_share": {
+            "type": "string",
+            "description": "Approximate share of subscriber base. Decimal-safe string.",
+            "examples": ["0.89", "0.11"]
+          },
+          "file_path": {
+            "type": "string",
+            "description": "Relative path from report root to the generated PDF."
+          },
+          "file_format": {
+            "type": "string",
+            "const": "pdf"
+          },
+          "file_size_bytes": {
+            "type": ["integer", "null"],
+            "description": "File size in bytes. Null if not yet generated."
+          },
+          "page_count": {
+            "type": ["integer", "null"],
+            "description": "Total pages. Null if not yet generated."
+          },
+          "status": {
+            "type": "string",
+            "enum": ["generated", "generating", "failed"],
+            "description": "Current generation status."
+          },
+          "error_message": {
+            "type": ["string", "null"],
+            "default": null
+          },
+          "terminology_adaptations": {
+            "type": "array",
+            "description": "Key financial term differences applied during localization.",
+            "items": {
+              "type": "object",
+              "required": ["term_id", "zh_tw", "zh_cn"],
+              "properties": {
+                "term_id": { "type": "string" },
+                "zh_tw": { "type": "string" },
+                "zh_cn": { "type": "string" }
+              }
+            },
+            "examples": [
+              [
+                { "term_id": "yield", "zh_tw": "殖利率", "zh_cn": "收益率" },
+                { "term_id": "margin_trading", "zh_tw": "融資", "zh_cn": "融资" },
+                { "term_id": "short_selling", "zh_tw": "融券", "zh_cn": "融券" },
+                { "term_id": "stock_index", "zh_tw": "加權指數", "zh_cn": "加权指数" },
+                { "term_id": "market_cap", "zh_tw": "市值", "zh_cn": "市值" },
+                { "term_id": "bull_market", "zh_tw": "多頭市場", "zh_cn": "牛市" },
+                { "term_id": "bear_market", "zh_tw": "空頭市場", "zh_cn": "熊市" }
+              ]
+            ]
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "market-analyst/fetch/yfinance/v1.0",
+  "title": "yfinance Fetch Result",
+  "description": "Data from yfinance Python library: indices, sector performance, VIX, futures.",
+  "type": "object",
+  "required": ["schema_version", "source", "status", "fetched_at", "data"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": { "type": "string", "const": "1.0" },
+    "source": { "type": "string", "const": "yfinance" },
+    "status": { "type": "string", "enum": ["ok", "error", "partial"] },
+    "error_message": { "type": ["string", "null"], "default": null },
+    "fetched_at": { "type": "string", "format": "date-time" },
+    "data": {
+      "type": ["object", "null"],
+      "properties": {
+        "indices": {
+          "type": "array",
+          "description": "Major market indices snapshot.",
+          "items": {
+            "type": "object",
+            "required": ["symbol", "name", "last_price", "change", "change_pct", "as_of"],
+            "properties": {
+              "symbol": { "type": "string", "examples": ["^GSPC", "^DJI", "^IXIC", "^TWII", "^HSI"] },
+              "name": { "type": "string" },
+              "last_price": { "type": "string" },
+              "change": { "type": "string", "description": "Signed decimal-safe string. e.g., '-23.45'" },
+              "change_pct": { "type": "string", "description": "Signed percentage. e.g., '-0.52'" },
+              "day_high": { "type": ["string", "null"] },
+              "day_low": { "type": ["string", "null"] },
+              "volume": { "type": ["string", "null"] },
+              "as_of": { "type": "string", "format": "date-time" }
+            }
+          }
+        },
+        "sector_performance": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["sector", "change_pct_1d"],
+            "properties": {
+              "sector": { "type": "string" },
+              "change_pct_1d": { "type": "string" },
+              "change_pct_1w": { "type": ["string", "null"] },
+              "change_pct_1m": { "type": ["string", "null"] },
+              "change_pct_ytd": { "type": ["string", "null"] },
+              "top_gainer": { "type": ["string", "null"], "description": "Ticker of top performer in sector." },
+              "top_loser": { "type": ["string", "null"] }
+            }
+          }
+        },
+        "vix": {
+          "type": "object",
+          "required": ["current", "change", "change_pct", "as_of"],
+          "properties": {
+            "current": { "type": "string" },
+            "change": { "type": "string" },
+            "change_pct": { "type": "string" },
+            "day_high": { "type": ["string", "null"] },
+            "day_low": { "type": ["string", "null"] },
+            "sma_20": { "type": ["string", "null"], "description": "20-day SMA for context." },
+            "as_of": { "type": "string", "format": "date-time" }
+          }
+        },
+        "futures": {
+          "type": "array",
+          "description": "Key futures contracts.",
+          "items": {
+            "type": "object",
+            "required": ["symbol", "name", "last_price", "change", "change_pct"],
+            "properties": {
+              "symbol": { "type": "string", "examples": ["ES=F", "NQ=F", "CL=F", "GC=F"] },
+              "name": { "type": "string" },
+              "last_price": { "type": "string" },
+              "change": { "type": "string" },
+              "change_pct": { "type": "string" },
+              "expiry": { "type": ["string", "null"], "format": "date" }
+            }
+          }
+        }
+      }
+    }
+  }
+}

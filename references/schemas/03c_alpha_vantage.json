@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "market-analyst/fetch/alpha-vantage/v1.0",
+  "title": "Alpha Vantage Fetch Result",
+  "description": "Data from Alpha Vantage REST API: RSI, MACD, SMA and other technical indicators.",
+  "type": "object",
+  "required": ["schema_version", "source", "status", "fetched_at", "data"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": { "type": "string", "const": "1.0" },
+    "source": { "type": "string", "const": "alpha_vantage" },
+    "status": { "type": "string", "enum": ["ok", "error", "partial"] },
+    "error_message": { "type": ["string", "null"], "default": null },
+    "fetched_at": { "type": "string", "format": "date-time" },
+    "data": {
+      "type": ["object", "null"],
+      "properties": {
+        "technical_indicators": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["ticker", "indicators"],
+            "properties": {
+              "ticker": { "type": "string" },
+              "indicators": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": ["name", "period", "value", "signal", "computed_at"],
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "enum": ["RSI", "MACD", "MACD_SIGNAL", "MACD_HIST", "SMA", "EMA", "BBANDS_UPPER", "BBANDS_MIDDLE", "BBANDS_LOWER", "STOCH_K", "STOCH_D", "ADX", "OBV", "ATR"],
+                      "description": "Indicator name. Use standardized names only."
+                    },
+                    "period": {
+                      "type": "integer",
+                      "description": "Lookback period (e.g., 14 for RSI-14, 20 for SMA-20)."
+                    },
+                    "value": {
+                      "type": "string",
+                      "description": "Current indicator value. Decimal-safe string."
+                    },
+                    "previous_value": {
+                      "type": ["string", "null"],
+                      "description": "Previous period value for trend comparison."
+                    },
+                    "signal": {
+                      "type": "string",
+                      "enum": ["bullish", "bearish", "neutral", "overbought", "oversold"],
+                      "description": "Interpreted signal based on standard thresholds."
+                    },
+                    "signal_strength": {
+                      "type": "string",
+                      "enum": ["strong", "moderate", "weak"],
+                      "description": "Confidence of the signal."
+                    },
+                    "computed_at": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  }
+                }
+              },
+              "price_snapshot": {
+                "type": "object",
+                "description": "Price at time of indicator computation for context.",
+                "properties": {
+                  "open": { "type": "string" },
+                  "high": { "type": "string" },
+                  "low": { "type": "string" },
+                  "close": { "type": "string" },
+                  "volume": { "type": "string" }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

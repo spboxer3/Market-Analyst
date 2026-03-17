@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "market-analyst/fetch/polymarket/v1.0",
+  "title": "Polymarket Fetch Result",
+  "description": "Data from Polymarket: geopolitical event odds, Fed rate decision bets, macro event probabilities.",
+  "type": "object",
+  "required": ["schema_version", "source", "status", "fetched_at", "data"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": { "type": "string", "const": "1.0" },
+    "source": { "type": "string", "const": "polymarket" },
+    "status": { "type": "string", "enum": ["ok", "error", "partial"] },
+    "error_message": { "type": ["string", "null"], "default": null },
+    "fetched_at": { "type": "string", "format": "date-time" },
+    "data": {
+      "type": ["object", "null"],
+      "properties": {
+        "markets": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["market_id", "category", "question", "outcomes", "total_volume", "last_updated"],
+            "properties": {
+              "market_id": {
+                "type": "string",
+                "description": "Polymarket market identifier."
+              },
+              "category": {
+                "type": "string",
+                "enum": ["fed_rate", "geopolitics", "elections", "economics", "crypto", "other"],
+                "description": "Market category for filtering in report sections."
+              },
+              "question": {
+                "type": "string",
+                "description": "The prediction market question.",
+                "examples": ["Will the Fed cut rates at the March 2026 meeting?"]
+              },
+              "outcomes": {
+                "type": "array",
+                "minItems": 2,
+                "items": {
+                  "type": "object",
+                  "required": ["label", "probability", "previous_probability"],
+                  "properties": {
+                    "label": { "type": "string", "examples": ["Yes", "No"] },
+                    "probability": {
+                      "type": "string",
+                      "description": "Current probability as decimal string (0-1). e.g., '0.73'"
+                    },
+                    "previous_probability": {
+                      "type": ["string", "null"],
+                      "description": "Probability 24h ago for trend. Null if market is new."
+                    },
+                    "change_24h": {
+                      "type": ["string", "null"],
+                      "description": "Signed change in probability over 24h."
+                    }
+                  }
+                }
+              },
+              "total_volume": {
+                "type": "string",
+                "description": "Total trading volume in USD. Decimal-safe string."
+              },
+              "resolution_date": {
+                "type": ["string", "null"],
+                "format": "date",
+                "description": "Expected resolution date. Null if open-ended."
+              },
+              "last_updated": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "market_relevance": {
+                "type": "string",
+                "enum": ["high", "medium", "low"],
+                "description": "How relevant this market is to financial analysis."
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

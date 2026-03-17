@@ -1,0 +1,229 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "market-analyst/pipeline/v1.0",
+  "title": "Processing Pipeline Schemas",
+  "description": "Stage 4: Four sequential processing steps — Integrate, Indicators, Charts, Template.",
+  "definitions": {
+    "integrated_data": {
+      "title": "Step 1: Integrated Data",
+      "description": "Merged output from all 6 data sources with conflict resolution.",
+      "type": "object",
+      "required": ["schema_version", "report_id", "integrated_at", "source_status_summary", "market_snapshot", "news", "sentiment", "predictions"],
+      "properties": {
+        "schema_version": { "type": "string", "const": "1.0" },
+        "report_id": { "type": "string" },
+        "integrated_at": { "type": "string", "format": "date-time" },
+        "source_status_summary": {
+          "type": "object",
+          "description": "Quick overview of which sources succeeded.",
+          "required": ["total_sources", "ok_count", "partial_count", "error_count", "sources"],
+          "properties": {
+            "total_sources": { "type": "integer", "const": 6 },
+            "ok_count": { "type": "integer" },
+            "partial_count": { "type": "integer" },
+            "error_count": { "type": "integer" },
+            "sources": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["source", "status"],
+                "properties": {
+                  "source": { "type": "string" },
+                  "status": { "type": "string", "enum": ["ok", "error", "partial"] },
+                  "fetched_at": { "type": "string", "format": "date-time" }
+                }
+              }
+            }
+          }
+        },
+        "market_snapshot": {
+          "type": "object",
+          "description": "Unified market data after conflict resolution.",
+          "properties": {
+            "indices": { "type": "array", "description": "From yfinance, deduplicated." },
+            "sector_performance": { "type": "array" },
+            "vix": { "type": "object" },
+            "futures": { "type": "array" },
+            "fundamentals": { "type": "array", "description": "From financial_datasets." },
+            "insider_activity": { "type": "array" },
+            "institutional_changes": { "type": "array" }
+          }
+        },
+        "news": { "type": "array", "description": "Merged from web_search." },
+        "sentiment": {
+          "type": "object",
+          "properties": {
+            "reddit": { "type": "object" },
+            "overall_market_mood": { "type": "string", "enum": ["risk_on", "risk_off", "mixed", "uncertain"] }
+          }
+        },
+        "predictions": { "type": "array", "description": "From Polymarket." },
+        "technical_indicators": { "type": "array", "description": "From Alpha Vantage." }
+      }
+    },
+    "indicators_output": {
+      "title": "Step 2: Derived Indicators",
+      "description": "Computed metrics that don't come directly from any single source.",
+      "type": "object",
+      "required": ["schema_version", "report_id", "computed_at", "derived_signals"],
+      "properties": {
+        "schema_version": { "type": "string", "const": "1.0" },
+        "report_id": { "type": "string" },
+        "computed_at": { "type": "string", "format": "date-time" },
+        "derived_signals": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["signal_name", "scope", "direction", "confidence", "description"],
+            "properties": {
+              "signal_name": { "type": "string", "examples": ["moving_average_crossover", "sector_rotation", "rsi_divergence", "volume_breakout"] },
+              "scope": { "type": "string", "description": "What this signal applies to.", "examples": ["TSMC", "semiconductors", "market_wide"] },
+              "direction": { "type": "string", "enum": ["bullish", "bearish", "neutral"] },
+              "confidence": { "type": "string", "enum": ["high", "medium", "low"] },
+              "description": { "type": "string", "maxLength": 300 },
+              "supporting_data": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "indicator": { "type": "string" },
+                    "value": { "type": "string" },
+                    "source": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "sector_heatmap_data": {
+          "type": "array",
+          "description": "Pre-computed data for sector heatmap chart.",
+          "items": {
+            "type": "object",
+            "required": ["sector", "performance_1d", "performance_1w"],
+            "properties": {
+              "sector": { "type": "string" },
+              "performance_1d": { "type": "string" },
+              "performance_1w": { "type": "string" },
+              "performance_1m": { "type": ["string", "null"] },
+              "color_code": { "type": "string", "description": "Hex color for heatmap rendering.", "pattern": "^#[0-9A-Fa-f]{6}$" }
+            }
+          }
+        }
+      }
+    },
+    "charts_manifest": {
+      "title": "Step 3: Charts Manifest",
+      "description": "Registry of all generated chart files.",
+      "type": "object",
+      "required": ["schema_version", "report_id", "generated_at", "charts"],
+      "properties": {
+        "schema_version": { "type": "string", "const": "1.0" },
+        "report_id": { "type": "string" },
+        "generated_at": { "type": "string", "format": "date-time" },
+        "charts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["chart_id", "chart_type", "title", "file_path", "format", "report_section"],
+            "properties": {
+              "chart_id": { "type": "string" },
+              "chart_type": {
+                "type": "string",
+                "enum": ["line", "candlestick", "heatmap", "bar", "pie", "area", "scatter", "treemap"]
+              },
+              "title": {
+                "type": "object",
+                "required": ["zh_tw"],
+                "properties": {
+                  "zh_tw": { "type": "string" },
+                  "zh_cn": { "type": ["string", "null"] }
+                }
+              },
+              "file_path": { "type": "string", "description": "Relative path from report root." },
+              "format": { "type": "string", "enum": ["png", "svg"] },
+              "width_px": { "type": "integer" },
+              "height_px": { "type": "integer" },
+              "report_section": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 8,
+                "description": "Which report section (1-8) this chart belongs to."
+              },
+              "library": { "type": "string", "enum": ["matplotlib", "plotly"] }
+            }
+          }
+        }
+      }
+    },
+    "report_draft": {
+      "title": "Step 4: Report Draft",
+      "description": "Structured content ready for localization and PDF rendering.",
+      "type": "object",
+      "required": ["schema_version", "report_id", "drafted_at", "sections"],
+      "properties": {
+        "schema_version": { "type": "string", "const": "1.0" },
+        "report_id": { "type": "string" },
+        "drafted_at": { "type": "string", "format": "date-time" },
+        "report_metadata": {
+          "type": "object",
+          "properties": {
+            "report_type": { "type": "string" },
+            "target_date": { "type": "string", "format": "date" },
+            "portfolio_mode": { "type": "string", "enum": ["with_portfolio", "without_portfolio"] },
+            "total_sections": { "type": "integer" }
+          }
+        },
+        "sections": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["section_number", "section_id", "included", "title", "content_blocks"],
+            "properties": {
+              "section_number": { "type": "integer", "minimum": 1, "maximum": 8 },
+              "section_id": {
+                "type": "string",
+                "enum": ["market_overview", "breaking_news", "technical_signals", "sector_heatmap", "polymarket", "reddit_sentiment", "portfolio_pnl", "tomorrow_preview"]
+              },
+              "included": { "type": "boolean", "description": "Whether this section is included in the current report." },
+              "title": {
+                "type": "object",
+                "required": ["zh_tw"],
+                "properties": {
+                  "zh_tw": { "type": "string" },
+                  "zh_cn": { "type": ["string", "null"] }
+                }
+              },
+              "content_blocks": {
+                "type": "array",
+                "description": "Ordered content blocks within the section.",
+                "items": {
+                  "type": "object",
+                  "required": ["block_type", "content"],
+                  "properties": {
+                    "block_type": {
+                      "type": "string",
+                      "enum": ["heading", "paragraph", "table", "chart_ref", "bullet_list", "key_metric", "divider"]
+                    },
+                    "content": {
+                      "type": "object",
+                      "description": "Content varies by block_type. Always includes zh_tw, optionally zh_cn.",
+                      "properties": {
+                        "zh_tw": {},
+                        "zh_cn": {}
+                      }
+                    },
+                    "chart_id": {
+                      "type": ["string", "null"],
+                      "description": "Reference to charts_manifest.chart_id. Only for block_type='chart_ref'."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

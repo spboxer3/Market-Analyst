@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "market-analyst/fetch/web-search/v1.0",
+  "title": "Web Search Fetch Result",
+  "description": "Data from web search: breaking news, economic calendar events, geopolitical developments.",
+  "type": "object",
+  "required": ["schema_version", "source", "status", "fetched_at", "data"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": { "type": "string", "const": "1.0" },
+    "source": { "type": "string", "const": "web_search" },
+    "status": { "type": "string", "enum": ["ok", "error", "partial"] },
+    "error_message": { "type": ["string", "null"], "default": null },
+    "fetched_at": { "type": "string", "format": "date-time" },
+    "data": {
+      "type": ["object", "null"],
+      "properties": {
+        "breaking_news": {
+          "type": "array",
+          "description": "Market-moving news items, most recent first.",
+          "items": {
+            "type": "object",
+            "required": ["headline", "source_name", "published_at", "impact_level", "categories"],
+            "properties": {
+              "headline": { "type": "string" },
+              "summary": { "type": ["string", "null"], "maxLength": 500 },
+              "source_name": { "type": "string", "examples": ["Reuters", "Bloomberg", "CNBC"] },
+              "source_url": { "type": ["string", "null"] },
+              "published_at": { "type": "string", "format": "date-time" },
+              "impact_level": {
+                "type": "string",
+                "enum": ["critical", "high", "medium", "low"],
+                "description": "Estimated market impact level."
+              },
+              "categories": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": ["earnings", "fed", "geopolitics", "trade", "regulation", "ipo", "merger", "macro", "sector", "crypto", "commodities", "other"]
+                }
+              },
+              "tickers_affected": {
+                "type": "array",
+                "items": { "type": "string" },
+                "description": "Tickers directly affected by this news."
+              }
+            }
+          }
+        },
+        "economic_calendar": {
+          "type": "array",
+          "description": "Upcoming economic events and data releases.",
+          "items": {
+            "type": "object",
+            "required": ["event_name", "scheduled_at", "importance"],
+            "properties": {
+              "event_name": { "type": "string", "examples": ["FOMC Meeting", "CPI Release", "Nonfarm Payrolls"] },
+              "scheduled_at": { "type": "string", "format": "date-time" },
+              "importance": { "type": "string", "enum": ["high", "medium", "low"] },
+              "previous_value": { "type": ["string", "null"] },
+              "forecast_value": { "type": ["string", "null"] },
+              "actual_value": { "type": ["string", "null"], "description": "Null if not yet released." },
+              "country": { "type": "string", "examples": ["US", "TW", "CN", "EU"] }
+            }
+          }
+        },
+        "geopolitical": {
+          "type": "array",
+          "description": "Geopolitical developments with market implications.",
+          "items": {
+            "type": "object",
+            "required": ["title", "summary", "regions", "market_impact"],
+            "properties": {
+              "title": { "type": "string" },
+              "summary": { "type": "string", "maxLength": 500 },
+              "regions": {
+                "type": "array",
+                "items": { "type": "string" }
+              },
+              "market_impact": {
+                "type": "string",
+                "enum": ["positive", "negative", "mixed", "uncertain"]
+              },
+              "sectors_affected": {
+                "type": "array",
+                "items": { "type": "string" }
+              },
+              "source_url": { "type": ["string", "null"] }
+            }
+          }
+        }
+      }
+    }
+  }
+}

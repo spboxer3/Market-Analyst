@@ -1,0 +1,104 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "market-analyst/fetch/reddit/v1.0",
+  "title": "Reddit Sentiment Fetch Result",
+  "description": "Data from Reddit communities (WSB, r/stocks, r/investing): sentiment analysis, trending tickers, discussion themes.",
+  "type": "object",
+  "required": ["schema_version", "source", "status", "fetched_at", "data"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": { "type": "string", "const": "1.0" },
+    "source": { "type": "string", "const": "reddit" },
+    "status": { "type": "string", "enum": ["ok", "error", "partial"] },
+    "error_message": { "type": ["string", "null"], "default": null },
+    "fetched_at": { "type": "string", "format": "date-time" },
+    "data": {
+      "type": ["object", "null"],
+      "properties": {
+        "subreddits_scanned": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["wallstreetbets", "stocks", "investing", "options", "stockmarket"]
+          },
+          "description": "Which subreddits were successfully scanned."
+        },
+        "scan_window_hours": {
+          "type": "integer",
+          "description": "How many hours back the scan covered.",
+          "default": 24
+        },
+        "trending_tickers": {
+          "type": "array",
+          "description": "Most mentioned tickers ranked by mention count.",
+          "items": {
+            "type": "object",
+            "required": ["ticker", "mention_count", "sentiment_score", "sentiment_label"],
+            "properties": {
+              "ticker": { "type": "string" },
+              "mention_count": { "type": "integer", "minimum": 1 },
+              "sentiment_score": {
+                "type": "string",
+                "description": "Aggregate sentiment score from -1.0 (bearish) to 1.0 (bullish). Decimal-safe string."
+              },
+              "sentiment_label": {
+                "type": "string",
+                "enum": ["very_bullish", "bullish", "neutral", "bearish", "very_bearish"]
+              },
+              "top_subreddit": {
+                "type": "string",
+                "description": "Subreddit with the most mentions for this ticker."
+              },
+              "sample_posts": {
+                "type": "array",
+                "maxItems": 3,
+                "items": {
+                  "type": "object",
+                  "required": ["title", "subreddit", "score", "comment_count", "created_at"],
+                  "properties": {
+                    "title": { "type": "string" },
+                    "subreddit": { "type": "string" },
+                    "score": { "type": "integer" },
+                    "comment_count": { "type": "integer" },
+                    "created_at": { "type": "string", "format": "date-time" },
+                    "url": { "type": ["string", "null"] }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "overall_sentiment": {
+          "type": "object",
+          "required": ["score", "label", "sample_size"],
+          "properties": {
+            "score": { "type": "string", "description": "Overall market sentiment -1.0 to 1.0." },
+            "label": { "type": "string", "enum": ["very_bullish", "bullish", "neutral", "bearish", "very_bearish"] },
+            "sample_size": { "type": "integer", "description": "Total posts/comments analyzed." },
+            "fear_greed_proxy": {
+              "type": ["string", "null"],
+              "description": "Reddit-derived fear/greed score 0-100. Null if insufficient data."
+            }
+          }
+        },
+        "notable_discussions": {
+          "type": "array",
+          "description": "High-impact discussions worth highlighting in the report.",
+          "maxItems": 5,
+          "items": {
+            "type": "object",
+            "required": ["title", "subreddit", "summary", "relevance"],
+            "properties": {
+              "title": { "type": "string" },
+              "subreddit": { "type": "string" },
+              "summary": { "type": "string", "maxLength": 300 },
+              "relevance": { "type": "string", "enum": ["high", "medium"] },
+              "tickers_mentioned": { "type": "array", "items": { "type": "string" } },
+              "url": { "type": ["string", "null"] }
+            }
+          }
+        }
+      }
+    }
+  }
+}

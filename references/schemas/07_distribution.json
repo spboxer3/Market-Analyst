@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "market-analyst/distribution/v1.0",
+  "title": "Distribution Manifest",
+  "description": "Stage 7: PDF delivery tracking per subscriber. Supports manual and future Resend API automation.",
+  "type": "object",
+  "required": ["schema_version", "report_id", "distribution_started_at", "delivery_method", "deliveries"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": { "type": "string", "const": "1.0" },
+    "report_id": { "type": "string" },
+    "distribution_started_at": { "type": "string", "format": "date-time" },
+    "distribution_completed_at": { "type": ["string", "null"], "format": "date-time" },
+    "delivery_method": {
+      "type": "string",
+      "enum": ["manual", "resend_api"],
+      "description": "Current delivery method. 'resend_api' is reserved for future automation."
+    },
+    "delivery_platform": {
+      "type": "string",
+      "const": "catedward.com",
+      "description": "Subscriber platform."
+    },
+    "summary": {
+      "type": "object",
+      "required": ["total_subscribers", "delivered", "failed", "pending"],
+      "properties": {
+        "total_subscribers": { "type": "integer" },
+        "delivered": { "type": "integer" },
+        "failed": { "type": "integer" },
+        "pending": { "type": "integer" }
+      }
+    },
+    "deliveries": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["subscriber_id", "locale", "status", "attempted_at"],
+        "properties": {
+          "subscriber_id": {
+            "type": "string",
+            "description": "Anonymized subscriber ID. Never store email addresses in pipeline JSON."
+          },
+          "locale": {
+            "type": "string",
+            "enum": ["zh-TW", "zh-CN"]
+          },
+          "status": {
+            "type": "string",
+            "enum": ["delivered", "failed", "pending", "bounced", "unsubscribed"]
+          },
+          "attempted_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "delivered_at": {
+            "type": ["string", "null"],
+            "format": "date-time",
+            "description": "Null if not yet delivered or failed."
+          },
+          "error_message": {
+            "type": ["string", "null"],
+            "default": null
+          },
+          "resend_message_id": {
+            "type": ["string", "null"],
+            "description": "Resend API message ID. Null for manual delivery."
+          }
+        }
+      }
+    }
+  }
+}

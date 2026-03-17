@@ -1,0 +1,113 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "market-analyst/trigger/v1.0",
+  "title": "Trigger Request",
+  "description": "Stage 1 output: parsed user command into structured trigger request.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "report_id",
+    "report_type",
+    "input_mode",
+    "requested_at",
+    "target_date",
+    "locale_priority",
+    "user_instructions",
+    "focus_tickers",
+    "focus_sectors",
+    "custom_parameters"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0"
+    },
+    "report_id": {
+      "type": "string",
+      "pattern": "^(pre_market|post_market|weekly|monthly)_\\d{8}_\\d{6}$",
+      "description": "Unique report identifier. Format: {report_type}_{YYYYMMDD}_{HHmmss}",
+      "examples": ["post_market_20260317_170000"]
+    },
+    "report_type": {
+      "type": "string",
+      "enum": ["pre_market", "post_market", "weekly", "monthly"],
+      "description": "Exactly one report type. Maps to: 盤前日報=pre_market, 盤後日報=post_market, 週報=weekly, 月報=monthly"
+    },
+    "input_mode": {
+      "type": "string",
+      "enum": ["minimal", "contextual", "detailed"],
+      "description": "How much detail the user provided in their command."
+    },
+    "requested_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp when the user issued the command.",
+      "examples": ["2026-03-17T07:45:00-04:00"]
+    },
+    "target_date": {
+      "type": "string",
+      "format": "date",
+      "description": "The market date this report covers. Format: YYYY-MM-DD",
+      "examples": ["2026-03-17"]
+    },
+    "locale_priority": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["zh-TW", "zh-CN"]
+      },
+      "minItems": 1,
+      "maxItems": 2,
+      "description": "Ordered list of locales to generate. First item is primary.",
+      "default": ["zh-TW", "zh-CN"]
+    },
+    "user_instructions": {
+      "type": ["string", "null"],
+      "description": "Raw user command text, preserved for audit trail. Null if triggered by scheduler."
+    },
+    "focus_tickers": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[A-Z0-9.]{1,10}$"
+      },
+      "description": "Tickers the user specifically asked to focus on. Empty array if none specified.",
+      "examples": [["TSMC", "AAPL", "2330.TW"]]
+    },
+    "focus_sectors": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Sectors the user specifically asked to focus on. Empty array if none.",
+      "examples": [["technology", "semiconductors"]]
+    },
+    "custom_parameters": {
+      "type": ["object", "null"],
+      "description": "Any additional parameters the user specified in detailed mode. Null for minimal/contextual mode.",
+      "properties": {
+        "date_range_start": { "type": ["string", "null"], "format": "date" },
+        "date_range_end": { "type": ["string", "null"], "format": "date" },
+        "comparison_period": { "type": ["string", "null"], "enum": ["1d", "1w", "1m", "3m", "6m", "1y", "ytd", null] },
+        "include_options_flow": { "type": "boolean", "default": false },
+        "include_crypto": { "type": "boolean", "default": false }
+      }
+    }
+  },
+  "examples": [
+    {
+      "schema_version": "1.0",
+      "report_id": "post_market_20260317_170000",
+      "report_type": "post_market",
+      "input_mode": "contextual",
+      "requested_at": "2026-03-17T16:50:00-04:00",
+      "target_date": "2026-03-17",
+      "locale_priority": ["zh-TW", "zh-CN"],
+      "user_instructions": "幫我生成今天的盤後日報，重點關注半導體和 TSMC",
+      "focus_tickers": ["TSMC", "2330.TW"],
+      "focus_sectors": ["semiconductors"],
+      "custom_parameters": null
+    }
+  ]
+}

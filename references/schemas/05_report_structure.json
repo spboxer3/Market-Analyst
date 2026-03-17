@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "market-analyst/report-structure/v1.0",
+  "title": "Report Section Inclusion Matrix",
+  "description": "Stage 5: Defines which of the 8 report sections are included based on report type and portfolio mode.",
+  "type": "object",
+  "required": ["schema_version", "report_id", "report_type", "portfolio_mode", "sections"],
+  "properties": {
+    "schema_version": { "type": "string", "const": "1.0" },
+    "report_id": { "type": "string" },
+    "report_type": { "type": "string", "enum": ["pre_market", "post_market", "weekly", "monthly"] },
+    "portfolio_mode": { "type": "string", "enum": ["with_portfolio", "without_portfolio"] },
+    "resolved_at": { "type": "string", "format": "date-time" },
+    "sections": {
+      "type": "array",
+      "minItems": 8,
+      "maxItems": 8,
+      "items": {
+        "type": "object",
+        "required": ["section_number", "section_id", "title_zh_tw", "title_zh_cn", "included", "exclusion_reason"],
+        "properties": {
+          "section_number": { "type": "integer", "minimum": 1, "maximum": 8 },
+          "section_id": {
+            "type": "string",
+            "enum": [
+              "market_overview",
+              "breaking_news",
+              "technical_signals",
+              "sector_heatmap",
+              "polymarket",
+              "reddit_sentiment",
+              "portfolio_pnl",
+              "tomorrow_preview"
+            ]
+          },
+          "title_zh_tw": { "type": "string" },
+          "title_zh_cn": { "type": "string" },
+          "included": { "type": "boolean" },
+          "exclusion_reason": {
+            "type": ["string", "null"],
+            "description": "Reason for exclusion. Null if included.",
+            "examples": [
+              null,
+              "not_applicable_for_report_type",
+              "portfolio_not_available"
+            ]
+          }
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "schema_version": "1.0",
+      "report_id": "post_market_20260317_170000",
+      "report_type": "post_market",
+      "portfolio_mode": "with_portfolio",
+      "resolved_at": "2026-03-17T17:00:05-04:00",
+      "sections": [
+        { "section_number": 1, "section_id": "market_overview", "title_zh_tw": "市場總覽", "title_zh_cn": "市场总览", "included": true, "exclusion_reason": null },
+        { "section_number": 2, "section_id": "breaking_news", "title_zh_tw": "重大新聞", "title_zh_cn": "重大新闻", "included": true, "exclusion_reason": null },
+        { "section_number": 3, "section_id": "technical_signals", "title_zh_tw": "技術訊號", "title_zh_cn": "技术信号", "included": true, "exclusion_reason": null },
+        { "section_number": 4, "section_id": "sector_heatmap", "title_zh_tw": "產業熱力圖", "title_zh_cn": "行业热力图", "included": true, "exclusion_reason": null },
+        { "section_number": 5, "section_id": "polymarket", "title_zh_tw": "預測市場", "title_zh_cn": "预测市场", "included": true, "exclusion_reason": null },
+        { "section_number": 6, "section_id": "reddit_sentiment", "title_zh_tw": "社群情緒", "title_zh_cn": "社区情绪", "included": true, "exclusion_reason": null },
+        { "section_number": 7, "section_id": "portfolio_pnl", "title_zh_tw": "投資組合損益", "title_zh_cn": "投资组合损益", "included": true, "exclusion_reason": null },
+        { "section_number": 8, "section_id": "tomorrow_preview", "title_zh_tw": "明日展望", "title_zh_cn": "明日展望", "included": true, "exclusion_reason": null }
+      ]
+    }
+  ],
+  "_inclusion_matrix": {
+    "description": "Reference: which sections appear in which report types. Portfolio P&L additionally requires portfolio_mode=with_portfolio.",
+    "matrix": {
+      "market_overview":   { "pre_market": true,  "post_market": true,  "weekly": true,  "monthly": true  },
+      "breaking_news":     { "pre_market": true,  "post_market": true,  "weekly": true,  "monthly": true  },
+      "technical_signals": { "pre_market": true,  "post_market": true,  "weekly": true,  "monthly": true  },
+      "sector_heatmap":    { "pre_market": false, "post_market": true,  "weekly": true,  "monthly": true  },
+      "polymarket":        { "pre_market": true,  "post_market": true,  "weekly": true,  "monthly": true  },
+      "reddit_sentiment":  { "pre_market": false, "post_market": true,  "weekly": true,  "monthly": false },
+      "portfolio_pnl":     { "pre_market": false, "post_market": true,  "weekly": true,  "monthly": true  },
+      "tomorrow_preview":  { "pre_market": true,  "post_market": true,  "weekly": false, "monthly": false }
+    }
+  }
+}
