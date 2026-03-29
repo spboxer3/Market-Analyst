@@ -1,6 +1,6 @@
 # Generated reports (per-run output, not source code)
 output/
-
+/runs/*
 # Python
 __pycache__/
 *.pyc
