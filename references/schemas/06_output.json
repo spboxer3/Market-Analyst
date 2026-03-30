@@ -1,22 +1,80 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "market-analyst/output/v1.0",
+  "$id": "market-analyst/output/v1.1",
   "title": "Output Manifest",
-  "description": "Stage 6: Localized output tracking. Maps each generated PDF to its locale and file path.",
+  "description": "Stage 6: Localized output tracking. HTML dashboard is the primary human-facing deliverable, with optional PDF/MD/JSON artifacts.",
   "type": "object",
-  "required": ["schema_version", "report_id", "generated_at", "outputs"],
+  "required": ["schema_version", "report_id", "generated_at", "style_contract", "outputs"],
   "additionalProperties": false,
   "properties": {
     "schema_version": { "type": "string", "const": "1.0" },
     "report_id": { "type": "string" },
     "generated_at": { "type": "string", "format": "date-time" },
+    "style_contract": {
+      "type": "object",
+      "required": ["market_color_convention", "stock_up_color", "stock_down_color", "stock_flat_color", "uses_sign_and_icon_with_color", "interpretation_on_hover_enabled"],
+      "properties": {
+        "market_color_convention": {
+          "type": "string",
+          "enum": ["tw_stock", "us_stock", "mixed"],
+          "description": "Taiwan equities convention (up=red/down=green), US convention (up=green/down=red), or mixed per section."
+        },
+        "stock_up_color": {
+          "type": "string",
+          "pattern": "^#[0-9A-Fa-f]{6}$"
+        },
+        "stock_down_color": {
+          "type": "string",
+          "pattern": "^#[0-9A-Fa-f]{6}$"
+        },
+        "stock_flat_color": {
+          "type": "string",
+          "pattern": "^#[0-9A-Fa-f]{6}$"
+        },
+        "uses_sign_and_icon_with_color": {
+          "type": "boolean",
+          "description": "Accessibility guardrail. Price direction is not represented by color alone."
+        },
+        "interpretation_on_hover_enabled": {
+          "type": "boolean",
+          "description": "When true, key report points provide meaning/implication tooltips on hover (or tap on mobile)."
+        },
+        "hover_targets": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["hero_takeaways", "quick_stats", "watchlist_rows", "technical_signals", "heatmap_cells", "chart_key_points"]
+          }
+        },
+        "section_overrides": {
+          "type": "array",
+          "description": "Used when market_color_convention='mixed'.",
+          "items": {
+            "type": "object",
+            "required": ["section_id", "market_color_convention"],
+            "properties": {
+              "section_id": { "type": "string" },
+              "market_color_convention": { "type": "string", "enum": ["tw_stock", "us_stock"] }
+            }
+          }
+        }
+      }
+    },
     "outputs": {
       "type": "array",
       "minItems": 1,
-      "maxItems": 2,
       "items": {
         "type": "object",
-        "required": ["locale", "priority", "audience", "audience_share", "file_path", "file_format", "file_size_bytes", "page_count", "status"],
+        "required": [
+          "locale",
+          "priority",
+          "audience",
+          "audience_share",
+          "file_path",
+          "file_format",
+          "is_primary_human_deliverable",
+          "status"
+        ],
         "properties": {
           "locale": {
             "type": "string",
@@ -38,11 +96,15 @@
           },
           "file_path": {
             "type": "string",
-            "description": "Relative path from report root to the generated PDF."
+            "description": "Relative path from report root to generated artifact."
           },
           "file_format": {
             "type": "string",
-            "const": "pdf"
+            "enum": ["html", "pdf", "md", "json"]
+          },
+          "is_primary_human_deliverable": {
+            "type": "boolean",
+            "description": "Exactly one localized HTML output should normally be true."
           },
           "file_size_bytes": {
             "type": ["integer", "null"],
@@ -50,11 +112,11 @@
           },
           "page_count": {
             "type": ["integer", "null"],
-            "description": "Total pages. Null if not yet generated."
+            "description": "Only applicable for PDF outputs."
           },
           "status": {
             "type": "string",
-            "enum": ["generated", "generating", "failed"],
+            "enum": ["generated", "generating", "failed", "pending"],
             "description": "Current generation status."
           },
           "error_message": {
@@ -72,21 +134,59 @@
                 "zh_tw": { "type": "string" },
                 "zh_cn": { "type": "string" }
               }
-            },
-            "examples": [
-              [
-                { "term_id": "yield", "zh_tw": "殖利率", "zh_cn": "收益率" },
-                { "term_id": "margin_trading", "zh_tw": "融資", "zh_cn": "融资" },
-                { "term_id": "short_selling", "zh_tw": "融券", "zh_cn": "融券" },
-                { "term_id": "stock_index", "zh_tw": "加權指數", "zh_cn": "加权指数" },
-                { "term_id": "market_cap", "zh_tw": "市值", "zh_cn": "市值" },
-                { "term_id": "bull_market", "zh_tw": "多頭市場", "zh_cn": "牛市" },
-                { "term_id": "bear_market", "zh_tw": "空頭市場", "zh_cn": "熊市" }
-              ]
-            ]
+            }
           }
         }
       }
     }
-  }
+  },
+  "examples": [
+    {
+      "schema_version": "1.0",
+      "report_id": "post_market_20260330_170000",
+      "generated_at": "2026-03-30T17:02:10-04:00",
+      "style_contract": {
+        "market_color_convention": "us_stock",
+        "stock_up_color": "#16A34A",
+        "stock_down_color": "#DC2626",
+        "stock_flat_color": "#6B7280",
+        "uses_sign_and_icon_with_color": true,
+        "interpretation_on_hover_enabled": true,
+        "hover_targets": ["hero_takeaways", "quick_stats", "watchlist_rows", "technical_signals", "heatmap_cells", "chart_key_points"]
+      },
+      "outputs": [
+        {
+          "locale": "zh-TW",
+          "priority": "primary",
+          "audience": "Taiwan + HK",
+          "audience_share": "0.89",
+          "file_path": "output/report_post_market_2026-03-30_zh-TW.html",
+          "file_format": "html",
+          "is_primary_human_deliverable": true,
+          "file_size_bytes": 132845,
+          "page_count": null,
+          "status": "generated",
+          "error_message": null,
+          "terminology_adaptations": [
+            { "term_id": "yield", "zh_tw": "殖利率", "zh_cn": "收益率" },
+            { "term_id": "bull_market", "zh_tw": "多頭市場", "zh_cn": "牛市" }
+          ]
+        },
+        {
+          "locale": "zh-CN",
+          "priority": "secondary",
+          "audience": "Mainland + NA",
+          "audience_share": "0.11",
+          "file_path": "output/report_post_market_2026-03-30_zh-CN.pdf",
+          "file_format": "pdf",
+          "is_primary_human_deliverable": false,
+          "file_size_bytes": 882201,
+          "page_count": 18,
+          "status": "generated",
+          "error_message": null,
+          "terminology_adaptations": []
+        }
+      ]
+    }
+  ]
 }

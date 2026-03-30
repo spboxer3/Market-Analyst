@@ -76,6 +76,16 @@ The dashboard should:
 - avoid raw markdown styling
 - make the information hierarchy obvious at a glance
 
+## Style and Stock Color Rules
+
+- Reports must use consistent design tokens (background, text, borders, severity badges, up/down colors).
+- Up/down colors must follow market convention, not one global mapping:
+- Taiwan equities (`tw_stock`): up=red, down=green, flat=gray
+- US equities (`us_stock`): up=green, down=red, flat=gray
+- For mixed-market reports (`mixed`), each section must show its own legend and convention.
+- Color cannot be the sole signal; pair it with `+/-`, `▲/▼/→`, or explicit direction labels.
+- Key metrics/signals must support hover/tap interpretation (what it is, why it matters, how to read, confidence, and risk note).
+
 ## Data sources
 
 - Financial Datasets

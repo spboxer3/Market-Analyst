@@ -206,7 +206,48 @@ Process raw data in four steps:
      - ordered sections
      - callouts / highlight items
      - fact vs inference labeling
-     - dashboard cards / tables / chart references
+     - hover interpretation payload for key numeric items
+     - insight scorecard with confidence and invalidation conditions
+     - scenario probabilities and action playbook
+      - dashboard cards / tables / chart references
+
+## Insight-First Analysis Contract (Mandatory)
+
+This skill must produce decision-useful analysis, not only data listing.
+
+### Required analysis blocks per report
+
+Every generated report must include all of the following:
+
+1. **Executive Insights (at least 3)**
+   - Each insight must include:
+     - `signal`: bullish | bearish | neutral | mixed
+     - `confidence`: high | medium | low
+     - `type`: fact | inference | mixed
+     - `evidence`: concrete data points (numbers, not generic text)
+     - `invalidation`: explicit condition that would make the insight no longer valid
+
+2. **Scenario analysis (at least 3 scenarios)**
+   - Include `base`, `bull`, `bear` (or equivalent naming)
+   - Assign probabilities that sum to 100%
+   - For each scenario include:
+     - trigger conditions
+     - expected market behavior
+     - recommended positioning / action
+
+3. **Execution playbook**
+   - Time-window based actions (for example open / mid-session / close, or pre-open / first 30 min)
+   - Must include risk control guidance and stop/invalidation level
+
+4. **Cross-market transmission**
+   - Explain how external markets/macros transmit into target market behavior
+   - Must separate directly sourced facts from model interpretation
+
+### Prohibited output pattern
+
+- Do not ship reports that are primarily a flat list of raw metrics.
+- Do not provide generic commentary without evidence thresholds or invalidation conditions.
+- If sources are missing, explicitly state impact on confidence and reduce certainty level.
 
 ## Stage 5: Report Structure
 
@@ -236,6 +277,114 @@ The dashboard should generally render as:
 6. Source and methodology footer
 
 Do not render the report as one long text column unless the user explicitly asks for a text-only version.
+
+## Visual Style Specification (Mandatory)
+
+All generated dashboards must follow a consistent design system. Treat these as required constraints,
+not optional suggestions.
+
+### 1) Design tokens
+
+Every HTML report must define CSS variables (or equivalent design tokens) for:
+
+- `--bg-page`, `--bg-card`, `--bg-muted`
+- `--text-primary`, `--text-secondary`, `--text-muted`
+- `--border-subtle`, `--border-strong`
+- `--state-critical`, `--state-key`, `--state-watch`, `--state-context`
+- `--stock-up`, `--stock-down`, `--stock-flat`
+- `--focus-ring`, `--shadow-card`
+
+Base UI requirements:
+
+- Use card-based layout, 12-column desktop grid, single-column mobile stack.
+- Typography must have clear hierarchy: headline, section title, body, numeric metric.
+- Numeric cells for price/percentage/volume must use tabular numbers when possible.
+- All key badges (`Critical`, `Key`, `Watch`, `Context`) must keep fixed color mapping across the report.
+
+Component styling safety rules:
+
+- Do not use generic class names like `.tag`, `.badge`, `.card-title` for critical UI elements.
+- Use namespaced classes for generated reports (for example `ma-*`) to avoid host-page CSS collisions.
+- Market convention chip must render as compact inline element, not full-width block:
+  - use `display: inline-flex`
+  - use `width: fit-content; max-width: 100%`
+  - desktop default `white-space: nowrap`, mobile can wrap
+
+### 2) Stock color semantics by market (critical)
+
+Stock up/down colors must follow market convention, not a single global rule.
+
+#### Taiwan market convention (`tw_stock`)
+
+- `up` (漲): red (`--stock-up: #D62828`)
+- `down` (跌): green (`--stock-down: #1F9D55`)
+- `flat` (平盤): neutral gray (`--stock-flat: #6B7280`)
+
+#### US market convention (`us_stock`)
+
+- `up`: green (`--stock-up: #16A34A`)
+- `down`: red (`--stock-down: #DC2626`)
+- `flat`: neutral gray (`--stock-flat: #6B7280`)
+
+### 3) Market convention resolution rules
+
+The rendering layer must explicitly set `market_color_convention` and cannot guess silently.
+
+- `tw_stock`: Taiwan equities/indices (e.g., TWSE, TPEX, TAIEX, tickers ending `.TW`/`.TWO`)
+- `us_stock`: US equities/indices (e.g., NYSE, NASDAQ, S&P 500, Dow, tickers like AAPL/NVDA/MSFT)
+- `mixed`: both Taiwan and US assets in one report; each section/table/chart must declare which
+  convention it uses, and the legend must be shown in that section header
+
+Do not bind color convention to locale alone. `zh-TW` reports may still be `us_stock`.
+
+### 4) Accessibility and ambiguity prevention
+
+Color cannot be the only carrier of meaning. Always pair color with at least one of:
+
+- explicit `+/-` sign for percentage change
+- directional icon (`▲`, `▼`, `→`) or text (`Up`, `Down`, `Flat`)
+- optional row-level label for large tables
+
+Minimum contrast target:
+
+- normal text: WCAG AA (4.5:1)
+- large text / key metrics: WCAG AA (3:1)
+
+### 5) Chart and table coloring rules
+
+- Candlestick and OHLC colors must follow the active section convention (`tw_stock` or `us_stock`).
+- Heatmap legends must show numeric ranges and direction labels, not only colors.
+- If one dashboard contains both TW and US heatmaps, legends must be separate and explicitly named.
+- Use the same up/down colors for KPI chips, table deltas, sparkline highlights, and chart legends
+  within the same market section.
+
+### 6) Hover interpretation layer (required)
+
+The dashboard must provide explanation-on-hover for major metrics and signals, so users can
+understand meaning instead of only seeing numbers.
+
+Minimum scope (must support):
+
+- hero top-3 takeaways
+- quick stats row metrics
+- key rows in watchlist / sector heatmap / technical signals
+- chart key points (latest value, breakout, divergence, unusual move)
+
+Required tooltip fields (per highlighted item):
+
+- `what_it_is`: what this metric/signal is
+- `why_it_matters`: why it matters for decision-making
+- `how_to_read`: interpretation rule (bullish/bearish/neutral conditions)
+- `confidence`: `high` | `medium` | `low`
+- `type`: `fact` | `inference` | `mixed`
+- `risk_note`: what could invalidate this read
+
+Interaction rules:
+
+- Desktop: show on hover and keep accessible via focus.
+- Mobile: support tap-to-open bottom sheet/popover with same content.
+- Keep tooltip concise (recommended 1-4 short lines), no long paragraphs.
+- Tooltip text must be localized (`zh-TW`, `zh-CN`) with market terminology adaptation.
 
 ## Stage 6: Output and Localization
 

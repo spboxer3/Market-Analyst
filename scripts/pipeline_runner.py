@@ -154,6 +154,91 @@ def stage5_resolve_sections(report_type: str, portfolio_mode: str, report_id: st
     }
 
 
+def stage4_report_draft_placeholder(report_id: str, report_type: str, portfolio_mode: str) -> dict:
+    """Stage 4 placeholder: insight-first draft skeleton."""
+    return {
+        "schema_version": "1.0",
+        "report_id": report_id,
+        "drafted_at": get_timestamp(),
+        "report_metadata": {
+            "report_type": report_type,
+            "target_date": datetime.now().astimezone().strftime("%Y-%m-%d"),
+            "portfolio_mode": portfolio_mode,
+            "total_sections": 0
+        },
+        "insight_scorecard": [
+            {
+                "title": "Placeholder insight",
+                "signal": "neutral",
+                "confidence": "low",
+                "type": "inference",
+                "evidence": ["Data fetch pending"],
+                "invalidation": "Replace after source data is available"
+            },
+            {
+                "title": "Placeholder insight",
+                "signal": "neutral",
+                "confidence": "low",
+                "type": "inference",
+                "evidence": ["Data fetch pending"],
+                "invalidation": "Replace after source data is available"
+            },
+            {
+                "title": "Placeholder insight",
+                "signal": "neutral",
+                "confidence": "low",
+                "type": "inference",
+                "evidence": ["Data fetch pending"],
+                "invalidation": "Replace after source data is available"
+            }
+        ],
+        "scenarios": [
+            {
+                "name": "base",
+                "probability": "50%",
+                "trigger_conditions": ["Awaiting data"],
+                "expected_behavior": "Awaiting data",
+                "recommended_action": "Awaiting data"
+            },
+            {
+                "name": "bull",
+                "probability": "25%",
+                "trigger_conditions": ["Awaiting data"],
+                "expected_behavior": "Awaiting data",
+                "recommended_action": "Awaiting data"
+            },
+            {
+                "name": "bear",
+                "probability": "25%",
+                "trigger_conditions": ["Awaiting data"],
+                "expected_behavior": "Awaiting data",
+                "recommended_action": "Awaiting data"
+            }
+        ],
+        "open_playbook": [
+            {
+                "time_window": "open",
+                "condition": "Awaiting data",
+                "action": "Awaiting data",
+                "risk_control": "Awaiting data"
+            },
+            {
+                "time_window": "mid_session",
+                "condition": "Awaiting data",
+                "action": "Awaiting data",
+                "risk_control": "Awaiting data"
+            },
+            {
+                "time_window": "late_session",
+                "condition": "Awaiting data",
+                "action": "Awaiting data",
+                "risk_control": "Awaiting data"
+            }
+        ],
+        "sections": []
+    }
+
+
 def run_pipeline(report_type: str, portfolio_path: str = None,
                  user_instructions: str = None, focus_tickers: list = None,
                  focus_sectors: list = None):
@@ -193,20 +278,42 @@ def run_pipeline(report_type: str, portfolio_path: str = None,
     sections = stage5_resolve_sections(report_type, portfolio_gate["mode"], report_id)
     write_json(workspace / "report_structure.json", sections)
 
+    # Stage 4: Draft placeholder (insight-first skeleton)
+    print("[Stage 4] Creating report draft skeleton...")
+    draft = stage4_report_draft_placeholder(report_id, report_type, portfolio_gate["mode"])
+    write_json(workspace / "processed" / "report_draft.json", draft)
+
     # Stage 6: Output Manifest
     print("[Stage 6] Creating output manifest...")
     output_manifest = {
         "schema_version": "1.0",
         "report_id": report_id,
         "generated_at": get_timestamp(),
+        "style_contract": {
+            "market_color_convention": "us_stock",
+            "stock_up_color": "#16A34A",
+            "stock_down_color": "#DC2626",
+            "stock_flat_color": "#6B7280",
+            "uses_sign_and_icon_with_color": True,
+            "interpretation_on_hover_enabled": True,
+            "hover_targets": [
+                "hero_takeaways",
+                "quick_stats",
+                "watchlist_rows",
+                "technical_signals",
+                "heatmap_cells",
+                "chart_key_points"
+            ]
+        },
         "outputs": [
             {
                 "locale": "zh-TW",
                 "priority": "primary",
                 "audience": "Taiwan + HK",
                 "audience_share": "0.89",
-                "file_path": f"output/{report_id}_zh-TW.pdf",
-                "file_format": "pdf",
+                "file_path": f"output/{report_id}_zh-TW.html",
+                "file_format": "html",
+                "is_primary_human_deliverable": True,
                 "file_size_bytes": None,
                 "page_count": None,
                 "status": "pending",
@@ -220,6 +327,7 @@ def run_pipeline(report_type: str, portfolio_path: str = None,
                 "audience_share": "0.11",
                 "file_path": f"output/{report_id}_zh-CN.pdf",
                 "file_format": "pdf",
+                "is_primary_human_deliverable": False,
                 "file_size_bytes": None,
                 "page_count": None,
                 "status": "pending",

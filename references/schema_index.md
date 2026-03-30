@@ -66,7 +66,7 @@ All schemas follow the conventions defined in `schemas/00_conventions.json`.
 | `03f_web_search.json` | 3 | News, economic calendar, geopolitics (Built-in) |
 | `04_pipeline.json` | 4 | Processing: integrate → indicators → charts → template |
 | `05_report_structure.json` | 5 | Section inclusion matrix (8 sections × 4 report types) |
-| `06_output.json` | 6 | Localized output manifest (zh-TW, zh-CN) |
+| `06_output.json` | 6 | Localized output manifest (HTML-first, plus optional PDF/MD/JSON) |
 | `07_distribution.json` | 7 | Delivery tracking per subscriber |
 
 ## Key Anti-Parsing-Error Rules
