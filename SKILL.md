@@ -417,7 +417,7 @@ the HTML dashboard first, not only the PDF.
 
 All JSON files in this pipeline follow these rules:
 
-1. Encoding: UTF-8 with BOM
+1. Encoding: UTF-8 (without BOM preferred; with BOM only if downstream explicitly requires it)
 2. Dates/times: ISO 8601 with timezone
 3. Money/decimals: exact string values
 4. Enums: closed sets validated at parse time
@@ -425,6 +425,22 @@ All JSON files in this pipeline follow these rules:
 6. Arrays: always arrays
 7. Versioning: root includes `"schema_version": "1.0"`
 8. Status: each fetch/process result uses `"ok" | "error" | "partial"`
+
+## Encoding Safety (Mandatory)
+
+Prevent mojibake and `?` replacement in all locales/shells (especially Windows PowerShell + cp950):
+
+1. Always read/write report artifacts as explicit UTF-8.
+   - Python write: `open(path, "w", encoding="utf-8")`
+   - Python read: `open(path, "r", encoding="utf-8")`
+2. Never transcode output through legacy code pages (`cp950`, `big5`, etc.) and never use
+   `errors="ignore"` / `errors="replace"` when handling report text.
+3. Before running Python in shell contexts, set UTF-8 runtime flags:
+   - `PYTHONUTF8=1`
+   - `PYTHONIOENCODING=utf-8`
+4. If terminal rendering looks broken, validate by reopening files with UTF-8 before concluding.
+5. If any generated content contains unexpected `?` in CJK text, treat it as data corruption:
+   regenerate the affected artifact from source data immediately.
 
 ## Quick Start
 
