@@ -226,6 +226,8 @@ Every generated report must include all of the following:
      - `type`: fact | inference | mixed
      - `evidence`: concrete data points (numbers, not generic text)
      - `invalidation`: explicit condition that would make the insight no longer valid
+   - Rendering requirement (hard): the HTML must contain a dedicated section heading
+     `Executive Insights` and at least 3 separately visible insight items (not collapsed into Top 3 only).
 
 2. **Scenario analysis (at least 3 scenarios)**
    - Include `base`, `bull`, `bear` (or equivalent naming)
@@ -248,6 +250,8 @@ Every generated report must include all of the following:
 - Do not ship reports that are primarily a flat list of raw metrics.
 - Do not provide generic commentary without evidence thresholds or invalidation conditions.
 - If sources are missing, explicitly state impact on confidence and reduce certainty level.
+- Do not treat `Top 3 takeaways` as a replacement for the `Executive Insights` section.
+- If `Executive Insights` has fewer than 3 items, the run must fail fast instead of producing a report.
 
 ## Stage 5: Report Structure
 
