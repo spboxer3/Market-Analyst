@@ -6,6 +6,7 @@ from pathlib import Path
 from zoneinfo import ZoneInfo
 
 import requests
+from yfinance_client import fetch_quotes
 
 
 def write_json(path: Path, data: dict):
@@ -365,8 +366,22 @@ def main():
                 "volume": str(to_int(r[2])),
                 "foreign_net_shares": str(foreign_sh),
                 "inst_net_shares": str(total_inst_sh),
-            }
-        )
+                }
+            )
+
+    yf_symbols = ["^TWII"] + [f"{tk}.TW" for tk, _, _ in energy_tickers]
+    yf_result = fetch_quotes(yf_symbols, period="5d", interval="1d")
+    yf_map = {row["symbol"]: row for row in (yf_result.get("data") or [])}
+    twii_quote = yf_map.get("^TWII")
+    for row in energy_rows:
+        quote = yf_map.get(f"{row['ticker']}.TW")
+        if not quote:
+            continue
+        row["close"] = quote["regular_market_price"]
+        row["chg_pct"] = f"{float(quote['change_pct']):+.2f}%"
+        row["volume"] = quote.get("volume") or row["volume"]
+        if quote.get("name"):
+            row["name"] = quote["name"]
 
     strongest = max(energy_rows, key=lambda x: float(x["chg_pct"].replace("%", "")))
     weakest = min(energy_rows, key=lambda x: float(x["chg_pct"].replace("%", "")))
@@ -406,14 +421,14 @@ def main():
         "03b_yfinance.json": {
             "schema_version": "1.0",
             "source": "yfinance",
-            "status": "ok",
+            "status": yf_result["status"],
             "fetched_at": fetched_at,
-            "error_message": None,
+            "error_message": yf_result.get("error_message"),
             "data": {
                 "tw_market": {
                     "trade_date": latest_date,
-                    "taiex_close": taiex_row[1].replace(",", ""),
-                    "taiex_change_pct": taiex_row[4],
+                    "taiex_close": twii_quote["regular_market_price"] if twii_quote else taiex_row[1].replace(",", ""),
+                    "taiex_change_pct": twii_quote["change_pct"] if twii_quote else taiex_row[4],
                     "turnover_twd": str(turnover),
                     "breadth_up": str(up_count),
                     "breadth_down": str(down_count),

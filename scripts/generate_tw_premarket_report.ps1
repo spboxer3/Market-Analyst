@@ -122,10 +122,11 @@ $latestIso = "{0}-{1}-{2}" -f $latest.Substring(0, 4), $latest.Substring(4, 2), 
 $miUrl = "https://www.twse.com.tw/rwd/zh/afterTrading/MI_INDEX?date=$latest&type=ALLBUT0999&response=json"
 $bfiUrl = "https://www.twse.com.tw/rwd/zh/fund/BFI82U?dayDate=$latest&type=day&response=json"
 $t86Url = "https://www.twse.com.tw/rwd/zh/fund/T86?date=$latest&selectType=ALLBUT0999&response=json"
-$yhUrl = "https://query1.finance.yahoo.com/v8/finance/chart/%5ETWII?range=5d&interval=1d"
 $polyUrl = "https://gamma-api.polymarket.com/markets?limit=120&active=true&closed=false&search=fed"
 $rssUrl = "https://tw.stock.yahoo.com/rss?category=%E5%8F%B0%E8%82%A1"
 $redditUrl = "https://www.reddit.com/r/stocks/search.json?q=Taiwan%20OR%20TSMC&restrict_sr=1&sort=new&t=week&limit=8"
+$yfHelper = Join-Path (Split-Path -Parent $MyInvocation.MyCommand.Path) "yfinance_client.py"
+$pythonExe = (Get-Command python -ErrorAction Stop).Source
 
 $mi = Invoke-RestMethod -Uri $miUrl -Method Get -TimeoutSec 30
 $bfi = Invoke-RestMethod -Uri $bfiUrl -Method Get -TimeoutSec 30
@@ -149,13 +150,20 @@ $foreignNet = [string]$foreignRow[3]
 $totalInstNet = [string]$totalInstRow[3]
 $highWatch = Parse-WatchlistHigh (Join-Path (Get-Location) "watchlist.md")
 
-$yhRaw = curl.exe -sL $yhUrl
+$yhData = $null
 $srcYfOk = $false
 $yhErr = $null
-if ($yhRaw -and $yhRaw -notmatch "Too Many Requests") {
-  $srcYfOk = $true
-} else {
-  $yhErr = if ($yhRaw) { $yhRaw.Trim() } else { "empty response" }
+try {
+  $yhRaw = & $pythonExe $yfHelper --symbols "^TWII" --period "5d" --interval "1d"
+  if ($yhRaw) {
+    $yhData = $yhRaw | ConvertFrom-Json
+    $srcYfOk = ($yhData.status -eq "ok" -and $yhData.data.Count -gt 0)
+    if (-not $srcYfOk) { $yhErr = $yhData.error_message }
+  } else {
+    $yhErr = "empty response"
+  }
+} catch {
+  $yhErr = $_.Exception.Message
 }
 
 $polyRaw = curl.exe -sL $polyUrl
@@ -223,7 +231,7 @@ if ($rssRaw) {
 }
 
 $f03a = @{ schema_version="1.0"; source="financial_datasets"; status="error"; fetched_at=$generatedAt; error_message="No connector in runtime" }
-$f03b = @{ schema_version="1.0"; source="yfinance"; status=(BoolText $srcYfOk); fetched_at=$generatedAt; error_message=$yhErr }
+$f03b = @{ schema_version="1.0"; source="yfinance"; status=(BoolText $srcYfOk); fetched_at=$generatedAt; error_message=$yhErr; data=if ($srcYfOk) { $yhData.data } else { $null } }
 $f03c = @{ schema_version="1.0"; source="alpha_vantage"; status="error"; fetched_at=$generatedAt; error_message="No API key" }
 $f03d = @{ schema_version="1.0"; source="polymarket"; status=(BoolText $polyOk); fetched_at=$generatedAt; error_message=$polyErr; data=$polyPicks }
 $f03e = @{ schema_version="1.0"; source="reddit"; status=(BoolText $redditOk); fetched_at=$generatedAt; error_message=$redditErr; summary=$redditSummary; top_hits=$redditHits }

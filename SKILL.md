@@ -1,7 +1,7 @@
 ---
 name: market-analyst
 description: >
-  Generate structured US market analysis reports (盤前日報, 盤後日報, 週報, 月報) with a UI-first
+  Generate structured US/TW market analysis reports (盤前日報, 盤中驗證報告, 盤後日報, 週報, 月報) with a UI-first
   output flow. The skill orchestrates parallel fetches from 6 sources, processes the data through
   a 7-stage pipeline, and produces localized zh-TW / zh-CN dashboard-style reports. Use this skill
   whenever the user asks for market reports, stock analysis, portfolio P&L, sector heatmaps,
@@ -147,6 +147,7 @@ Resolve the natural-language user request into `trigger_request.json`.
 | Type | ID | Schedule | Timezone |
 |---|---|---|---|
 | 盤前日報 | `pre_market` | Daily ET 08:00 | America/New_York |
+| 盤中驗證報告 | `intraday_validation` | During session | Local market timezone |
 | 盤後日報 | `post_market` | Daily ET 17:00 | America/New_York |
 | 週報 | `weekly` | Friday close | America/New_York |
 | 月報 | `monthly` | Month-end | America/New_York |
@@ -158,6 +159,24 @@ Resolve the natural-language user request into `trigger_request.json`.
 - `detailed`: explicit scope, date range, tickers, and custom requests
 
 If the report type is ambiguous, ask the user to clarify. Never guess.
+
+### Intraday validation module
+
+When the user asks for a盤中 report, strategy check, validation of the morning plan, or real-time
+investment advice, treat it as `intraday_validation`.
+
+Required behavior:
+
+- Load the latest same-day pre-market report if available and use it as the baseline thesis.
+- Compare the current market state against the pre-market thesis and score whether the strategy is
+  `accurate`, `partially_accurate`, or `inaccurate`.
+- Explain which pre-market points were validated, which failed, and what should change now.
+- Produce a dedicated **盤前策略驗證** block and a dedicated **即時投資建議** block.
+- If no same-day pre-market report exists, say that explicitly and fall back to a pure intraday view.
+
+Preferred implementation:
+
+- Taiwan intraday workflow: `scripts/generate_tw_intraday_report.py`
 
 ## Stage 2: Portfolio Gate
 
